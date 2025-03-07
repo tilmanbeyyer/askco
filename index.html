@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>askco</title>
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+    <style>
+        :root {
+            font-family: Inter, sans-serif;
+            font-feature-settings: "liga" 1, "calt" 1;
+            /* fix for Chrome */
+        }
+
+        @supports (font-variation-settings: normal) {
+            :root {
+                font-family: InterVariable, sans-serif;
+            }
+        }
+
+        /* Add these styles for the overlay */
+        #categories-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        #categories-overlay[aria-hidden="true"] {
+            display: none;
+        }
+
+        #categories-overlay .uk-overlay-content {
+            width: 90%;
+            max-width: 500px;
+        }
+    </style>
+
+    <!-- For stability in production, it's recommended that you hardcode the latest version in the CDN link. -->
+
+    <link rel="stylesheet" href="https://unpkg.com/franken-ui@internal/dist/css/core.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/franken-ui@internal/dist/css/utilities.min.css" />
+
+    <script>
+        const htmlElement = document.documentElement;
+
+        const __FRANKEN__ = JSON.parse(
+            localStorage.getItem("__FRANKEN__") || "{}"
+        );
+
+        if (
+            __FRANKEN__.mode === "dark" ||
+            (!__FRANKEN__.mode &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+            htmlElement.classList.add("dark");
+        } else {
+            htmlElement.classList.remove("dark");
+        }
+
+        htmlElement.classList.add(__FRANKEN__.theme || "uk-theme-zinc");
+        htmlElement.classList.add(__FRANKEN__.radii || "uk-radii-md");
+        htmlElement.classList.add(__FRANKEN__.shadows || "uk-shadows-sm");
+        htmlElement.classList.add(__FRANKEN__.font || "uk-font-sm");
+        htmlElement.classList.add(__FRANKEN__.chart || "uk-chart-default");
+    </script>
+
+    <script type="module" src="https://unpkg.com/franken-ui@internal/dist/js/core.iife.js"></script>
+    <script type="module" src="https://unpkg.com/franken-ui@internal/dist/js/icon.iife.js"></script>
+
+    <!-- <script
+      type="module"
+      src="https://unpkg.com/franken-ui@internal/dist/js/chart.iife.js"
+    ></script> -->
+</head>
+<script>
+    const questionsList = [
+        {
+            id: 3,
+            question: "How do you define success in your career?",
+            category: "career growth"
+        },
+        {
+            id: 4,
+            question: "What values are most important to you in relationships?",
+            category: "relationships"
+        },
+        {
+            id: 5,
+            question: "What challenges have shaped your personal development the most?",
+            category: "personal growth"
+        },
+        {
+            id: 6,
+            question: "What habits do you believe contribute to a productive day?",
+            category: "self-improvement"
+        },
+        {
+            id: 13,
+            question: "What habits do you believe contribute to a productive day2?",
+            category: "self-improvement"
+        },
+        {
+            id: 7,
+            question: "What fears or doubts hold you back from taking risks?",
+            category: "obstacles"
+        },
+        {
+            id: 8,
+            question: "What impact do you hope to leave on the world?",
+            category: "legacy"
+        },
+        {
+            id: 9,
+            question: "What are the biggest lessons you've learned from failure?",
+            category: "life lessons"
+        },
+        {
+            id: 10,
+            question: "How do you handle conflict in professional or personal settings?",
+            category: "communication"
+        },
+        {
+            id: 11,
+            question: "What motivates you to keep pushing forward during difficult times?",
+            category: "motivation"
+        },
+        {
+            id: 12,
+            question: "What does a perfect work-life balance look like for you?",
+            category: "work-life balance"
+        }
+    ];
+
+    const categoryList = [...new Set(questionsList.map(question => question.category))];
+
+    // Add this at the top level with your other variables
+    let filteredQuestionsList = [...questionsList]; // Start with all questions
+
+    function getQuestion() {
+        // Use filtered list instead of full list
+        const questions = filteredQuestionsList.length > 0 ? filteredQuestionsList : questionsList;
+        const randomIndex = Math.floor(Math.random() * questions.length);
+        const randomQuestion = questions[randomIndex];
+
+        console.log(randomQuestion);
+        document.getElementById("question").innerHTML = randomQuestion.question;
+        document.getElementById("category").innerHTML = randomQuestion.category;
+    }
+
+    getQuestion();
+
+    function saveAndCloseCategories() {
+        // Get all toggle states
+        const toggles = document.querySelectorAll('#category-toggles input[type="checkbox"]');
+        const selectedCategories = Array.from(toggles)
+            .filter(toggle => toggle.checked)
+            .map(toggle => toggle.dataset.category);
+
+        // If no categories are selected, enable all toggles and use all categories
+        if (selectedCategories.length === 0) {
+            enableAllCategories();
+            filteredQuestionsList = [...questionsList];
+        } else {
+            filteredQuestionsList = questionsList.filter(q => selectedCategories.includes(q.category));
+        }
+
+        // Get a new question from the filtered list
+        getQuestion();
+
+        // Close the overlay
+        closeCategoriesOverlay();
+    }
+</script>
+
+<body class="bg-background text-foreground">
+
+    <!-- START CODING HERE -->
+    <div class="text-center p-16 content-center h-screen flex items-center justify-center">
+        <div class="flex flex-col gap-4 items-center">
+            <div class="flex-col text-center p-4">
+                <h1 class="text-4xl font-bold">askco</h1>
+            </div>
+            <h3 class="uk-card-title" id="question"></h3>
+            <small class="text-gray-500" id="category"></small>
+            <div class="flex flex-row gap-2">
+                <button class="uk-btn uk-btn-ghost w-fit" onclick="openCategoriesOverlay()">Categories</button>
+                <button class="uk-btn uk-btn-default w-fit" onclick="getQuestion()">Next</button>
+            </div>
+        </div>
+    </div>
+    <div id="categories-overlay" class="uk-overlay" aria-hidden="true">
+        <div class="uk-overlay-content">
+            <div class="uk-card">
+                <div class="uk-card-header flex items-center justify-between">
+                    <h1 class="uk-card-title">Categories</h1>
+                    <button class="uk-btn uk-btn-ghost" onclick="closeCategoriesOverlay()">
+                        <uk-icon name="x"></uk-icon>
+                    </button>
+                </div>
+                <div class="uk-card-body">
+                    <div class="flex gap-2 mb-8">
+                        <button class="uk-btn uk-btn-success" onclick="enableAllCategories()">Enable All</button>
+                        <button class="uk-btn uk-btn-danger" onclick="disableAllCategories()">Disable All</button>
+                    </div>
+                    <div id="category-toggles" class="space-y-4"></div>
+                </div>
+                <div class="uk-card-footer flex justify-end gap-2">
+                    <button class="uk-btn uk-btn-ghost" onclick="closeCategoriesOverlay()">Cancel</button>
+                    <button class="uk-btn uk-btn-primary" onclick="saveAndCloseCategories()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openCategoriesOverlay() {
+            const overlay = document.getElementById('categories-overlay');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeCategoriesOverlay() {
+            const overlay = document.getElementById('categories-overlay');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        // Generate category toggles
+        const categoryTogglesContainer = document.getElementById('category-toggles');
+
+        categoryList.forEach(category => {
+            const toggleWrapper = document.createElement('div');
+            toggleWrapper.className = 'flex items-center space-x-2';
+
+            toggleWrapper.innerHTML = `
+                <input class="uk-toggle-switch uk-toggle-switch-primary" 
+                       checked 
+                       id="toggle-${category}" 
+                       type="checkbox" 
+                       data-category="${category}" />
+                <label class="uk-form-label" for="toggle-${category}">${category}</label>
+            `;
+
+            categoryTogglesContainer.appendChild(toggleWrapper);
+        });
+
+        // Add these new functions
+        function enableAllCategories() {
+            const toggles = document.querySelectorAll('#category-toggles input[type="checkbox"]');
+            toggles.forEach(toggle => toggle.checked = true);
+        }
+
+        function disableAllCategories() {
+            const toggles = document.querySelectorAll('#category-toggles input[type="checkbox"]');
+            toggles.forEach(toggle => toggle.checked = false);
+        }
+
+        getQuestion();
+    </script>
+
+    <!-- END -->
+</body>
+
+
+</html>
