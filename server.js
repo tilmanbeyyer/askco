@@ -2,12 +2,14 @@ const express = require("express");
 const app = express();
 require("dotenv").config();
 const { Client } = require("@notionhq/client");
+const path = require("path");
 
+// Initialize Notion client
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const databaseId = process.env.DATABASE_ID;
 
 // Serve static files from the public directory
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Function to extract question data from Notion page
 const getQuestionObject = (page) => {
@@ -61,7 +63,18 @@ app.get("/api/questions", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Catch-all route to serve index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+// Only listen to port if running directly (not in Vercel)
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export the Express app for Vercel
+module.exports = app;

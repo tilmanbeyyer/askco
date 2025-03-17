@@ -1,11 +1,12 @@
 {
   "name": "askco",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "build": "npm install"
+    "build": "npm install",
+    "vercel-build": "echo hello"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,9 @@
     "@notionhq/client": "^2.3.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "description": ""
 }
