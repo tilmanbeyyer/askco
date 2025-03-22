@@ -41,12 +41,6 @@ app.get("/api/questions", async (req, res) => {
   try {
     const response = await notion.databases.query({
       database_id: databaseId,
-      filter: {
-        property: "Check",
-        checkbox: {
-          equals: true,
-        },
-      },
     });
 
     const questionList = await Promise.all(

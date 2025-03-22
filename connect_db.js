@@ -23,12 +23,6 @@ const getQuestionObject = (page) => {
   try {
     const response = await notion.databases.query({
       database_id: databaseId,
-      filter: {
-        property: "Check",
-        checkbox: {
-          equals: true,
-        },
-      },
     });
 
     const pageIdList = response.results.map((obj) => obj.id);
