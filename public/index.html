@@ -1,169 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>askco</title>
-    <link rel="preconnect" href="https://rsms.me/" />
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 
-    <style>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>askgo</title>
+  <link rel="preconnect" href="https://rsms.me/" />
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+  <style>
+    :root {
+      font-family: Inter, sans-serif;
+      font-feature-settings: "liga" 1, "calt" 1;
+      /* fix for Chrome */
+    }
+
+    @supports (font-variation-settings: normal) {
       :root {
-        font-family: Inter, sans-serif;
-        font-feature-settings: "liga" 1, "calt" 1;
-        /* fix for Chrome */
+        font-family: InterVariable, sans-serif;
       }
+    }
 
-      @supports (font-variation-settings: normal) {
-        :root {
-          font-family: InterVariable, sans-serif;
-        }
-      }
+    /* Add these styles for the overlay */
+    #categories-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
 
-      /* Add these styles for the overlay */
-      #categories-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 50;
-      }
+    #categories-overlay[aria-hidden="true"] {
+      display: none;
+    }
 
-      #categories-overlay[aria-hidden="true"] {
-        display: none;
-      }
+    #categories-overlay .uk-overlay-content {
+      width: 90%;
+      max-width: 500px;
+    }
+  </style>
 
-      #categories-overlay .uk-overlay-content {
-        width: 90%;
-        max-width: 500px;
-      }
-    </style>
+  <!-- For stability in production, it's recommended that you hardcode the latest version in the CDN link. -->
 
-    <!-- For stability in production, it's recommended that you hardcode the latest version in the CDN link. -->
+  <link rel="stylesheet" href="https://unpkg.com/franken-ui@internal/dist/css/core.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/franken-ui@internal/dist/css/utilities.min.css" />
 
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/franken-ui@internal/dist/css/core.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/franken-ui@internal/dist/css/utilities.min.css"
-    />
+  <script>
+    const htmlElement = document.documentElement;
 
-    <script>
-      const htmlElement = document.documentElement;
+    const __FRANKEN__ = JSON.parse(
+      localStorage.getItem("__FRANKEN__") || "{}"
+    );
 
-      const __FRANKEN__ = JSON.parse(
-        localStorage.getItem("__FRANKEN__") || "{}"
-      );
+    if (
+      __FRANKEN__.mode === "dark" ||
+      (!__FRANKEN__.mode &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+    ) {
+      htmlElement.classList.add("dark");
+    } else {
+      htmlElement.classList.remove("dark");
+    }
 
-      if (
-        __FRANKEN__.mode === "dark" ||
-        (!__FRANKEN__.mode &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
-        htmlElement.classList.add("dark");
-      } else {
-        htmlElement.classList.remove("dark");
-      }
+    htmlElement.classList.add(__FRANKEN__.theme || "uk-theme-zinc");
+    htmlElement.classList.add(__FRANKEN__.radii || "uk-radii-md");
+    htmlElement.classList.add(__FRANKEN__.shadows || "uk-shadows-sm");
+    htmlElement.classList.add(__FRANKEN__.font || "uk-font-sm");
+    htmlElement.classList.add(__FRANKEN__.chart || "uk-chart-default");
+  </script>
 
-      htmlElement.classList.add(__FRANKEN__.theme || "uk-theme-zinc");
-      htmlElement.classList.add(__FRANKEN__.radii || "uk-radii-md");
-      htmlElement.classList.add(__FRANKEN__.shadows || "uk-shadows-sm");
-      htmlElement.classList.add(__FRANKEN__.font || "uk-font-sm");
-      htmlElement.classList.add(__FRANKEN__.chart || "uk-chart-default");
-    </script>
+  <script type="module" src="https://unpkg.com/franken-ui@internal/dist/js/core.iife.js"></script>
+  <script type="module" src="https://unpkg.com/franken-ui@internal/dist/js/icon.iife.js"></script>
 
-    <script
-      type="module"
-      src="https://unpkg.com/franken-ui@internal/dist/js/core.iife.js"
-    ></script>
-    <script
-      type="module"
-      src="https://unpkg.com/franken-ui@internal/dist/js/icon.iife.js"
-    ></script>
-
-    <!-- <script
+  <!-- <script
       type="module"
       src="https://unpkg.com/franken-ui@internal/dist/js/chart.iife.js"
     ></script> -->
-  </head>
-  <script>
-    let questionsList = [];
-    let filteredQuestionsList = [];
+</head>
+<script>
+  let questionsList = [];
+  let filteredQuestionsList = [];
 
-    async function loadQuestionsFromDatabase() {
-      try {
-        const response = await fetch("/api/questions");
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        questionsList = data;
-        filteredQuestionsList = [...questionsList];
+  async function loadQuestionsFromDatabase() {
+    try {
+      const response = await fetch("/api/questions");
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      questionsList = data;
+      filteredQuestionsList = [...questionsList];
 
-        // Hide loading screen and show main content
-        document.getElementById("loading-screen").classList.add("hidden");
-        document.getElementById("main-content").classList.remove("hidden");
+      // Hide loading screen and show main content
+      document.getElementById("loading-screen").classList.add("hidden");
+      document.getElementById("main-content").classList.remove("hidden");
 
-        generateCategoryToggles();
-        getQuestion();
-      } catch (error) {
-        console.error("Error loading questions:", error);
-        document.getElementById("loading-screen").innerHTML = `
+      generateCategoryToggles();
+      getQuestion();
+    } catch (error) {
+      console.error("Error loading questions:", error);
+      document.getElementById("loading-screen").innerHTML = `
           <div class="flex flex-col gap-4 items-center">
             <uk-icon name="alert-triangle" class="text-red-500 text-4xl"></uk-icon>
             <p class="text-red-500">Failed to load questions. Please try again later.</p>
             <button class="uk-btn uk-btn-primary" onclick="location.reload()">Retry</button>
           </div>
         `;
-      }
     }
+  }
 
-    function getQuestion() {
-      if (questionsList.length === 0) return;
+  function getQuestion() {
+    if (questionsList.length === 0) return;
 
-      const questions =
-        filteredQuestionsList.length > 0
-          ? filteredQuestionsList
-          : questionsList;
-      const randomIndex = Math.floor(Math.random() * questions.length);
-      const randomQuestion = questions[randomIndex];
+    const questions =
+      filteredQuestionsList.length > 0
+        ? filteredQuestionsList
+        : questionsList;
+    const randomIndex = Math.floor(Math.random() * questions.length);
+    const randomQuestion = questions[randomIndex];
 
-      document.getElementById("question").innerHTML =
-        randomQuestion.question.plain_text;
-      const categories = randomQuestion.question_type
-        .map((type) => type.name)
-        .join(", ");
-      document.getElementById("category").innerHTML = categories;
-    }
+    document.getElementById("question").innerHTML =
+      randomQuestion.question.plain_text;
+    const categories = randomQuestion.question_type
+      .map((type) => type.name)
+      .join(", ");
+    document.getElementById("category").innerHTML = categories;
+  }
 
-    function updateCategoryList() {
-      const allCategories = new Set();
-      questionsList.forEach((question) => {
-        question.question_type.forEach((type) => {
-          allCategories.add(type.name);
-        });
+  function updateCategoryList() {
+    const allCategories = new Set();
+    questionsList.forEach((question) => {
+      question.question_type.forEach((type) => {
+        allCategories.add(type.name);
       });
-      return Array.from(allCategories);
-    }
+    });
+    return Array.from(allCategories);
+  }
 
-    function generateCategoryToggles() {
-      const categoryList = updateCategoryList();
-      const categoryTogglesContainer =
-        document.getElementById("category-toggles");
-      categoryTogglesContainer.innerHTML = "";
+  function generateCategoryToggles() {
+    const categoryList = updateCategoryList();
+    const categoryTogglesContainer =
+      document.getElementById("category-toggles");
+    categoryTogglesContainer.innerHTML = "";
 
-      categoryList.forEach((category) => {
-        const toggleWrapper = document.createElement("div");
-        toggleWrapper.className = "flex items-center space-x-2";
+    categoryList.forEach((category) => {
+      const toggleWrapper = document.createElement("div");
+      toggleWrapper.className = "flex items-center space-x-2";
 
-        toggleWrapper.innerHTML = `
+      toggleWrapper.innerHTML = `
           <input class="uk-toggle-switch uk-toggle-switch-primary" 
                  checked 
                  id="toggle-${category}" 
@@ -172,138 +161,119 @@
           <label class="uk-form-label" for="toggle-${category}">${category}</label>
         `;
 
-        categoryTogglesContainer.appendChild(toggleWrapper);
-      });
-    }
+      categoryTogglesContainer.appendChild(toggleWrapper);
+    });
+  }
 
-    function openCategoriesOverlay() {
-      const overlay = document.getElementById("categories-overlay");
-      overlay.setAttribute("aria-hidden", "false");
-    }
+  function openCategoriesOverlay() {
+    const overlay = document.getElementById("categories-overlay");
+    overlay.setAttribute("aria-hidden", "false");
+  }
 
-    function closeCategoriesOverlay() {
-      const overlay = document.getElementById("categories-overlay");
-      overlay.setAttribute("aria-hidden", "true");
-    }
+  function closeCategoriesOverlay() {
+    const overlay = document.getElementById("categories-overlay");
+    overlay.setAttribute("aria-hidden", "true");
+  }
 
-    function enableAllCategories() {
-      const toggles = document.querySelectorAll(
-        '#category-toggles input[type="checkbox"]'
+  function enableAllCategories() {
+    const toggles = document.querySelectorAll(
+      '#category-toggles input[type="checkbox"]'
+    );
+    toggles.forEach((toggle) => (toggle.checked = true));
+  }
+
+  function disableAllCategories() {
+    const toggles = document.querySelectorAll(
+      '#category-toggles input[type="checkbox"]'
+    );
+    toggles.forEach((toggle) => (toggle.checked = false));
+  }
+
+  function saveAndCloseCategories() {
+    const toggles = document.querySelectorAll(
+      '#category-toggles input[type="checkbox"]'
+    );
+    const selectedCategories = Array.from(toggles)
+      .filter((toggle) => toggle.checked)
+      .map((toggle) => toggle.dataset.category);
+
+    if (selectedCategories.length === 0) {
+      enableAllCategories();
+      filteredQuestionsList = [...questionsList];
+    } else {
+      filteredQuestionsList = questionsList.filter((q) =>
+        q.question_type.some((type) => selectedCategories.includes(type.name))
       );
-      toggles.forEach((toggle) => (toggle.checked = true));
     }
 
-    function disableAllCategories() {
-      const toggles = document.querySelectorAll(
-        '#category-toggles input[type="checkbox"]'
-      );
-      toggles.forEach((toggle) => (toggle.checked = false));
-    }
+    getQuestion();
+    closeCategoriesOverlay();
+  }
 
-    function saveAndCloseCategories() {
-      const toggles = document.querySelectorAll(
-        '#category-toggles input[type="checkbox"]'
-      );
-      const selectedCategories = Array.from(toggles)
-        .filter((toggle) => toggle.checked)
-        .map((toggle) => toggle.dataset.category);
+  // Initialize the application
+  loadQuestionsFromDatabase();
+</script>
 
-      if (selectedCategories.length === 0) {
-        enableAllCategories();
-        filteredQuestionsList = [...questionsList];
-      } else {
-        filteredQuestionsList = questionsList.filter((q) =>
-          q.question_type.some((type) => selectedCategories.includes(type.name))
-        );
-      }
-
-      getQuestion();
-      closeCategoriesOverlay();
-    }
-
-    // Initialize the application
-    loadQuestionsFromDatabase();
-  </script>
-
-  <body class="bg-background text-foreground">
-    <div class="mt-4 text-center">
-      <h1 class="text-4xl font-bold">askco</h1>
+<body class="bg-background text-foreground">
+  <div class="mt-4 text-center">
+    <h1 class="text-4xl font-bold">askco</h1>
+  </div>
+  <div class="text-center p-16 content-center h-screen flex items-center justify-center">
+    <!-- Loading screen -->
+    <div id="loading-screen" class="flex flex-col gap-4 items-center">
+      <div class="uk-spinner"></div>
+      <p>Loading questions...</p>
     </div>
-    <div
-      class="text-center p-16 content-center h-screen flex items-center justify-center"
-    >
-      <!-- Loading screen -->
-      <div id="loading-screen" class="flex flex-col gap-4 items-center">
-        <div class="uk-spinner"></div>
-        <p>Loading questions...</p>
-      </div>
 
-      <!-- Main content (hidden initially) -->
-      <div id="main-content-container">
-        <div id="main-content" class="flex flex-col gap-4 items-center hidden">
-          <h3 class="uk-card-title" id="question"></h3>
-          <small class="text-gray-500" id="category"></small>
-          <div class="flex flex-row gap-2">
-            <button class="uk-btn uk-btn-default w-fit" onclick="getQuestion()">
-              Next
-            </button>
-            <button
-              class="uk-btn uk-btn-ghost w-fit"
-              onclick="openCategoriesOverlay()"
-            >
-              Categories
-            </button>
-          </div>
+    <!-- Main content (hidden initially) -->
+    <div id="main-content-container">
+      <div id="main-content" class="flex flex-col gap-4 items-center hidden">
+        <h3 class="uk-card-title" id="question"></h3>
+        <small class="text-gray-500" id="category"></small>
+        <div class="flex flex-row gap-2">
+          <button class="uk-btn uk-btn-default w-fit" onclick="getQuestion()">
+            Next
+          </button>
+          <button class="uk-btn uk-btn-ghost w-fit" onclick="openCategoriesOverlay()">
+            Categories
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Categories overlay -->
-    <div id="categories-overlay" class="uk-overlay" aria-hidden="true">
-      <div class="uk-overlay-content">
-        <div class="uk-card">
-          <div class="uk-card-header flex items-center justify-between">
-            <h1 class="uk-card-title">Categories</h1>
-            <button
-              class="uk-btn uk-btn-ghost"
-              onclick="closeCategoriesOverlay()"
-            >
-              <uk-icon name="x"></uk-icon>
+  <!-- Categories overlay -->
+  <div id="categories-overlay" class="uk-overlay" aria-hidden="true">
+    <div class="uk-overlay-content">
+      <div class="uk-card">
+        <div class="uk-card-header flex items-center justify-between">
+          <h1 class="uk-card-title">Categories</h1>
+          <button class="uk-btn uk-btn-ghost" onclick="closeCategoriesOverlay()">
+            <uk-icon name="x"></uk-icon>
+          </button>
+        </div>
+        <div class="uk-card-body">
+          <div class="flex gap-2 mb-8">
+            <button class="uk-btn uk-btn-success" onclick="enableAllCategories()">
+              Enable All
+            </button>
+            <button class="uk-btn uk-btn-danger" onclick="disableAllCategories()">
+              Disable All
             </button>
           </div>
-          <div class="uk-card-body">
-            <div class="flex gap-2 mb-8">
-              <button
-                class="uk-btn uk-btn-success"
-                onclick="enableAllCategories()"
-              >
-                Enable All
-              </button>
-              <button
-                class="uk-btn uk-btn-danger"
-                onclick="disableAllCategories()"
-              >
-                Disable All
-              </button>
-            </div>
-            <div id="category-toggles" class="space-y-4"></div>
-          </div>
-          <div class="uk-card-footer flex justify-end gap-2">
-            <button
-              class="uk-btn uk-btn-ghost"
-              onclick="closeCategoriesOverlay()"
-            >
-              Cancel
-            </button>
-            <button
-              class="uk-btn uk-btn-primary"
-              onclick="saveAndCloseCategories()"
-            >
-              Save
-            </button>
-          </div>
+          <div id="category-toggles" class="space-y-4"></div>
+        </div>
+        <div class="uk-card-footer flex justify-end gap-2">
+          <button class="uk-btn uk-btn-ghost" onclick="closeCategoriesOverlay()">
+            Cancel
+          </button>
+          <button class="uk-btn uk-btn-primary" onclick="saveAndCloseCategories()">
+            Save
+          </button>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
